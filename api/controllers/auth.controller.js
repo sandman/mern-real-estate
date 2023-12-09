@@ -21,6 +21,7 @@ export const login = async (req, res, next) => {
     try {
         const existingUser = await User.findOne({ email });
         if (!existingUser) {
+            // Change this to 401 wrong credentials to not give away that the user doesn't exist
             next(errorHandler(404, 'User not found!'));
         }
         const isPasswordCorrect = bcrypt.compareSync(password, existingUser.password);
@@ -29,8 +30,9 @@ export const login = async (req, res, next) => {
         }
         const token = jwt.sign({ id: existingUser._id }, process.env.JWT_SECRET, { expiresIn: '1d' });
         const { password: pass, ...rest } = existingUser._doc;
-        res.cookie('access_token', token, { httpOnly: true, expires: new Date(Date.now() + 24 * 60 * 60 * 1) });
-        res.status(200).json(rest);
+        res
+            .cookie('access_token', token, { httpOnly: true, expires: new Date(Date.now() + 24 * 60 * 60 * 1) })
+            .status(200).json(rest);
     } catch (error) {
         next(error);
     }
