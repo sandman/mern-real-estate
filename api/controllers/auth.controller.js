@@ -1,6 +1,7 @@
 import User from "../models/user.model.js";
 import bcrypt from "bcryptjs";
 import { errorHandler } from "../utils/error.js";
+import jwt from "jsonwebtoken";
 
 export const register = async (req, res, next ) => {
     // res.send('Register route is working!');
@@ -26,7 +27,10 @@ export const login = async (req, res, next) => {
         if (!isPasswordCorrect) {
             next(errorHandler(401, 'Wrong credentials'));
         }
-        res.status(200).json('User logged in successfully!');
+        const token = jwt.sign({ id: existingUser._id }, process.env.JWT_SECRET, { expiresIn: '1d' });
+        const { password: pass, ...rest } = existingUser._doc;
+        res.cookie('access_token', token, { httpOnly: true, expires: new Date(Date.now() + 24 * 60 * 60 * 1) });
+        res.status(200).json(rest);
     } catch (error) {
         next(error);
     }
